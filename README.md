@@ -98,8 +98,9 @@ dashboard.
 3. In the new Worker: **Settings** → **Domains & Routes** → **Add** → **Custom domain** →
    `intelbrew.sh`. (The zone must be on the same Cloudflare account; Cloudflare creates
    the DNS record and certificate.)
-4. Optional: in the same place, turn off the `workers.dev` route, or set
-   `"workers_dev": false` in `wrangler.jsonc`.
+4. Nothing else to switch off: `wrangler.jsonc` already disables the `*.workers.dev`
+   hostname, preview URLs and Workers Logs (no request logging, so no client IPs
+   are stored).
 
 Each push to `main` then redeploys.
 
@@ -121,3 +122,10 @@ After a change to `install.sh` upstream, `intelbrew.sh` serves it within about 5
 
 BSD-2-Clause, like Intelbrew ([LICENSE](LICENSE)). Intelbrew is not affiliated with or
 endorsed by Homebrew.
+
+## Note
+
+intelbrew.sh serves whatever is on `d4rkwyng/intelbrew` `main` within about 5 minutes
+(edge cache), so every installer push reaches `curl | bash` users. That is the same as
+the raw GitHub URL; the installer wraps its body in `main()` so a truncated download
+runs nothing.
