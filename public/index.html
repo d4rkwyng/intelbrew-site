@@ -24,6 +24,7 @@
     <code id="install-cmd">curl -fsSL https://intelbrew.sh | bash</code>
     <button type="button" class="copy" data-copy="install-cmd" aria-label="Copy install command">Copy</button>
   </div>
+  <p class="visually-hidden" id="copy-status" role="status"></p>
   <p class="hint">Paste it into Terminal. It shows every change and asks before making it.</p>
 
   <div class="tankard">
@@ -38,8 +39,8 @@
 
 <main id="main">
 
-<section aria-labelledby="h-intro" class="intro">
-  <p id="h-intro">Homebrew no longer builds ready-made packages ("bottles") for Intel Macs, so
+<section class="intro">
+  <p>Homebrew no longer builds ready-made packages ("bottles") for Intel Macs, so
   <code>brew install</code> falls back to compiling from source, which can take a long time.
   Intelbrew builds them every day on its own Intel macOS builder. Run one command to switch,
   then use <code>brew</code> as normal.</p>
@@ -120,7 +121,8 @@
     <div>
       <h3><code>brew install --cask</code> says "No Cask with this name exists"</h3>
       <p>Casks leave API mode too, so tap them once: <code>brew tap homebrew/cask</code>
-      (about 620 MB). The installer offers this (default No), or pass <code>--casks</code>.
+      (about 620 MB). The installer offers this (default No), or run it with <code>--casks</code>:
+      <code>curl -fsSL https://intelbrew.sh | bash -s -- --casks</code>.
       Intelbrew does not build or test casks: they are upstream app downloads, each with its
       own macOS minimum.</p>
     </div>
