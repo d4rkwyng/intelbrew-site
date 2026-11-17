@@ -17,9 +17,12 @@
     // proxy); every other path is served straight from ./public.
     "run_worker_first": ["/", "/install.sh"]
   },
-  // No Workers Logs: they would record request metadata (including client IPs)
-  // for every install. Upstream failures still go to console.error / wrangler tail.
+  // Workers Logs off (owner's setting): no stored request metadata or client IPs.
+  // Upstream failures still go to console.error / wrangler tail.
   "observability": {
-    "enabled": false
+    "logs": {
+      "enabled": false,
+      "invocation_logs": true
+    }
   }
 }
