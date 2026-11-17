@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Intelbrew: Homebrew bottles for Intel Macs</title>
+<meta name="description" content="Ready-made Homebrew packages (bottles) for Intel Macs, built every day. One command to switch, then use brew as normal.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon-32.png" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/style.css">
+<script src="/copy.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="hero">
+  <img class="px logo" src="/img/intelbrew-logo.png" alt="Intelbrew logo: a pixel-art mug of beer with an i on it" width="128" height="128">
+  <h1>Intelbrew</h1>
+  <p class="tagline">Homebrew bottles for Intel Macs</p>
+
+  <div class="cmd cmd-main">
+    <code id="install-cmd">curl -fsSL https://intelbrew.sh | bash</code>
+    <button type="button" class="copy" data-copy="install-cmd" aria-label="Copy install command">Copy</button>
+  </div>
+  <p class="hint">Paste it into Terminal. It shows every change and asks before making it.</p>
+
+  <div class="tankard">
+    <p>Want a GUI? Get <a href="https://github.com/d4rkwyng/tankard">Tankard</a>:</p>
+    <div class="cmd cmd-small">
+      <code id="tankard-cmd">brew install --cask d4rkwyng/tap/tankard</code>
+      <button type="button" class="copy" data-copy="tankard-cmd" aria-label="Copy Tankard install command">Copy</button>
+    </div>
+    <a class="download" href="https://github.com/d4rkwyng/tankard/releases/latest">Download</a>
+  </div>
+</header>
+
+<main id="main">
+
+<section aria-labelledby="h-intro" class="intro">
+  <p id="h-intro">Homebrew no longer builds ready-made packages ("bottles") for Intel Macs, so
+  <code>brew install</code> falls back to compiling from source, which can take a long time.
+  Intelbrew builds them every day on its own Intel macOS builder. Run one command to switch,
+  then use <code>brew</code> as normal.</p>
+</section>
+
+<section aria-labelledby="h-for-me" class="spot">
+  <img class="px art" src="/img/mac.png" alt="" width="128" height="128">
+  <div>
+    <h2 id="h-for-me">Is this for me?</h2>
+    <ul>
+      <li>An <strong>Intel Mac</strong> (not Apple Silicon).</li>
+      <li><strong>macOS 14 Sonoma or newer</strong> (natively, or through OpenCore Legacy Patcher).</li>
+      <li><strong>Not a Core 2 or Penryn CPU.</strong> Most Macs from 2010-2011 on work; a few Core i3 models don't.</li>
+      <li>Apple's <strong>Command Line Tools</strong>. If you don't have them, run <code>xcode-select --install</code>.</li>
+    </ul>
+    <p>The installer checks all of these and stops, without changing anything, if one is missing.</p>
+  </div>
+</section>
+
+<section aria-labelledby="h-see" class="spot">
+  <img class="px art" src="/img/terminal.png" alt="" width="128" height="128">
+  <div>
+    <h2 id="h-see">What you'll see</h2>
+    <ol>
+      <li>If you already have Homebrew, a choice: press <kbd>Enter</kbd> to switch it in place and keep your installed packages.</li>
+      <li>A list of every change it will make. Type <code>yes</code> and press <kbd>Enter</kbd> to go ahead. Anything else stops it with nothing changed.</li>
+      <li>Possibly your Mac password, if it needs to create folders in <code>/usr/local</code>. Nothing shows on screen while you type it; that's normal.</li>
+      <li>A one-time download of about 1.3 GB (roughly 5-15 minutes).</li>
+      <li>A boxed <strong>ACTION NEEDED</strong> note at the end: quit Terminal and open it again.</li>
+    </ol>
+    <p>To check it worked, in a new Terminal window run <code>brew config | grep GIT_REMOTE</code>.
+    Both lines should mention <code>d4rkwyng</code>. Then use <code>brew install</code> and
+    <code>brew upgrade</code> as usual.</p>
+  </div>
+</section>
+
+<section aria-labelledby="h-get" class="spot">
+  <img class="px art" src="/img/pour.png" alt="" width="128" height="128">
+  <div>
+    <h2 id="h-get">What you get</h2>
+    <p>With an Intelbrew bottle, <code>brew install</code> downloads the finished build and
+    pours it: no compiling. On our builder, <code>hello</code> pours in 3.4 seconds.
+    Without a bottle, the same command compiles from source on your Mac. Build times on our
+    builder (an Intel Sonoma VM):</p>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th scope="col">Formula</th><th scope="col">With a bottle</th><th scope="col">Build from source</th></tr></thead>
+      <tbody>
+        <tr><td><code>llvm</code> 23.1.5</td><td>pour</td><td>3 h 16 min</td></tr>
+        <tr><td><code>rust</code> 1.100.0</td><td>pour</td><td>25 min</td></tr>
+        <tr><td><code>node@24</code> 24.22.2</td><td>pour</td><td>15.5 min</td></tr>
+        <tr><td><code>python@3.14</code> 3.14.9</td><td>pour</td><td>4.3 min</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>Coverage: the top 500 formulae by installs, plus their dependencies, about 880 formulae.
+    Coverage is partial right now while the rebuild backlog fills in.</p>
+  </div>
+</section>
+
+<section aria-labelledby="h-how" class="spot">
+  <img class="px art" src="/img/robot.png" alt="" width="128" height="128">
+  <div>
+    <h2 id="h-how">How it works</h2>
+    <p>Intelbrew publishes <a href="https://github.com/d4rkwyng/intelbrew-core">intelbrew-core</a>,
+    a fork of homebrew-core with x86_64 Sonoma bottles on its GitHub Releases, rebuilt daily.
+    Homebrew uses it in git mode, set by three lines in your shell profile. Homebrew itself
+    comes from a small fork, <a href="https://github.com/d4rkwyng/brew">d4rkwyng/brew</a>:
+    each upstream release plus one patch for the Intel warning.</p>
+  </div>
+</section>
+
+<section aria-labelledby="h-faq">
+  <h2 id="h-faq">Questions</h2>
+
+  <div class="spot faq">
+    <img class="px art" src="/img/casks.png" alt="" width="128" height="128">
+    <div>
+      <h3><code>brew install --cask</code> says "No Cask with this name exists"</h3>
+      <p>Casks leave API mode too, so tap them once: <code>brew tap homebrew/cask</code>
+      (about 620 MB). The installer offers this (default No), or pass <code>--casks</code>.
+      Intelbrew does not build or test casks: they are upstream app downloads, each with its
+      own macOS minimum.</p>
+    </div>
+  </div>
+
+  <div class="spot faq">
+    <img class="px art" src="/img/turtle.png" alt="" width="128" height="128">
+    <div>
+      <h3>Why is a formula building from source?</h3>
+      <p>There's no Intelbrew bottle for it, yet or ever. It may be outside the top set, still
+      in the rebuild backlog, held at its last working version after an Intel build broke,
+      dropped after 8 weeks stuck, or not buildable on our Sonoma builder (for example
+      because it needs a full Xcode). Formulae that depend on an unbuildable one get no
+      bottle either.</p>
+    </div>
+  </div>
+
+  <div class="faq plain">
+    <h3>How do I go back to upstream Homebrew?</h3>
+    <p>Remove the three <code>export</code> lines from your shell profile, open a new terminal, and run:</p>
+    <pre><code>git -C "$(brew --repository)" remote set-url origin https://github.com/Homebrew/brew
+brew update</code></pre>
+    <p>Optionally, delete the core clone: <code>brew untap homebrew/core</code>.</p>
+  </div>
+</section>
+
+<section aria-labelledby="h-links" class="links">
+  <h2 id="h-links">Links</h2>
+  <ul>
+    <li><a href="https://github.com/d4rkwyng/intelbrew">Intelbrew on GitHub</a> (installer and docs)</li>
+    <li><a href="https://github.com/d4rkwyng/intelbrew/blob/main/docs/installer.md">What the installer does</a></li>
+    <li><a href="https://github.com/d4rkwyng/intelbrew-core">intelbrew-core</a> (the core fork and its bottles)</li>
+    <li><a href="https://github.com/d4rkwyng/brew">d4rkwyng/brew</a> (the brew fork)</li>
+    <li><a href="https://github.com/d4rkwyng/tankard">Tankard</a> (a native Mac app for Homebrew)</li>
+    <li><a href="https://mindtricks.io/projects/intelbrew">Project page on mindtricks.io</a></li>
+    <li><a href="/install.sh">View the install script</a></li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  <p>Intelbrew is independent: not affiliated with or endorsed by Homebrew.
+  Homebrew is &copy; Homebrew contributors, BSD-2-Clause. Homebrew, Apple, Mac, macOS and
+  Intel are trademarks of their respective owners, used only to describe compatibility.</p>
+  <p>No cookies, analytics or trackers.</p>
+</footer>
+</body>
+</html>

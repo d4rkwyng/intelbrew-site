@@ -1,0 +1,21 @@
+// intelbrew.sh Worker. No account_id and no routes here on purpose: the account
+// comes from the Workers Builds Git connection, and the custom domain
+// (intelbrew.sh) is added in the dashboard under Settings -> Domains & Routes.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "intelbrew-sh",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    // Only these two paths run the script (UA sniffing and the installer
+    // proxy); every other path is served straight from ./public.
+    "run_worker_first": ["/", "/install.sh"]
+  },
+  "observability": {
+    "enabled": true
+  }
+}
