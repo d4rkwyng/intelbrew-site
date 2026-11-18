@@ -118,6 +118,8 @@ h1 { font-size: 2.6rem; line-height: 1.1; margin: 12px 0 4px; letter-spacing: -0
   background: var(--card);
 }
 .tankard p { margin: 0 0 10px; }
+.tankard-title { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.tankard-icon { width: 32px; height: 32px; flex: none; }
 .download {
   display: inline-block;
   margin-top: 12px;
