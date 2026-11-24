@@ -36,10 +36,13 @@ const env = {
     async fetch(request) {
       const p = new URL(request.url).pathname;
       this.calls.push(p);
+      // Workers Static Assets sends HTML as bare "text/html" (no charset).
       if (p === "/" ) return new Response("<!doctype html><title>Intelbrew</title>", {
-        headers: { "content-type": "text/html; charset=utf-8" } });
+        headers: { "content-type": "text/html" } });
+      if (p === "/style.css") return new Response("body{}", {
+        headers: { "content-type": "text/css" } });
       return new Response("<!doctype html><title>Not found</title>", {
-        status: 404, headers: { "content-type": "text/html; charset=utf-8" } });
+        status: 404, headers: { "content-type": "text/html" } });
     },
   },
 };
@@ -83,10 +86,71 @@ test("a browser on / gets the landing page and no upstream fetch", async () => {
   const f = okFetch();
   const res = await handle(req("/", { ua: CHROME_UA, accept: BROWSER_ACCEPT }), env, f);
   assert.equal(res.status, 200);
-  assert.match(res.headers.get("content-type"), /text\/html/);
+  assert.equal(res.headers.get("content-type"), "text/html; charset=utf-8");
   assert.match(res.headers.get("vary"), /User-Agent/);
   assert.match(res.headers.get("content-security-policy"), /default-src 'none'/);
   assert.equal(f.calls.length, 0);
+});
+
+test("HEAD / from a browser also gets the HTML charset", async () => {
+  const f = okFetch();
+  const res = await handle(req("/", { ua: CHROME_UA, accept: BROWSER_ACCEPT, method: "HEAD" }), env, f);
+  assert.equal(res.headers.get("content-type"), "text/html; charset=utf-8");
+  assert.equal(f.calls.length, 0);
+});
+
+test("charset fix only touches HTML: other asset types keep their type", async () => {
+  const f = okFetch();
+  const css = await handle(req("/style.css", { ua: CHROME_UA, accept: BROWSER_ACCEPT }), env, f);
+  assert.equal(css.headers.get("content-type"), "text/css");
+  const missing = await handle(req("/nope", { ua: CHROME_UA, accept: BROWSER_ACCEPT }), env, f);
+  assert.equal(missing.headers.get("content-type"), "text/html; charset=utf-8");
+  assert.equal(f.calls.length, 0);
+});
+
+test("missing pages: 404 status kept, HTML charset, security headers, no Vary", async () => {
+  for (const [ua, accept] of [[CHROME_UA, BROWSER_ACCEPT], ["curl/8.7.1", "*/*"]]) {
+    for (const method of ["GET", "HEAD"]) {
+      const f = okFetch();
+      const res = await handle(req("/no/such/page", { ua, accept, method }), env, f);
+      assert.equal(res.status, 404, `${ua} ${method}`);
+      assert.equal(res.headers.get("content-type"), "text/html; charset=utf-8");
+      assert.match(res.headers.get("content-security-policy"), /default-src 'none'/);
+      assert.equal(res.headers.get("x-content-type-options"), "nosniff");
+      assert.equal(res.headers.get("vary"), null);
+      assert.equal(f.calls.length, 0);
+    }
+  }
+});
+
+test("run_worker_first sends missing pages to the worker and keeps static files static", async () => {
+  const { readFile, readdir } = await import("node:fs/promises");
+  const raw = await readFile(new URL("../wrangler.jsonc", import.meta.url), "utf8");
+  // Strip // line comments (none of the string values contain "//").
+  const cfg = JSON.parse(raw.replace(/^\s*\/\/.*$/gm, ""));
+  const pats = cfg.assets.run_worker_first;
+  // Glob match: "*" matches anything, including "/".
+  const m = (pat, path) => new RegExp("^" + pat.replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+    .replace(/\*/g, ".*") + "$").test(path);
+  const workerFirst = (path) =>
+    pats.some((p) => !p.startsWith("!") && m(p, path)) &&
+    !pats.some((p) => p.startsWith("!") && m(p.slice(1), path));
+  for (const p of ["/", "/install.sh", "/nope", "/no/such/page", "/404", "/404.html", "/index.html"]) {
+    assert.equal(workerFirst(p), true, p);
+  }
+  // Every non-HTML file in public/ stays on the static path (public/_headers
+  // applies; types and caching unchanged).
+  const files = await readdir(new URL("../public/", import.meta.url), { recursive: true });
+  const statics = files.map((f) => "/" + f.split("\\").join("/"))
+    .filter((f) => /\.[a-z0-9]+$/i.test(f) && !/\.html$/.test(f) && f !== "/_headers");
+  assert.ok(statics.includes("/style.css") && statics.includes("/img/tankard.png"));
+  for (const f of statics) assert.equal(workerFirst(f), false, f);
+});
+
+test("landing page names the Tankard icon", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  assert.match(html, /<img class="tankard-icon" src="\/img\/tankard.png" alt="Tankard"/);
 });
 
 test("/install.sh serves the script to any user agent, including browsers", async () => {

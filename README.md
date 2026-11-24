@@ -10,17 +10,23 @@ No framework, no build step, no runtime dependencies, no cookies or analytics.
 
 ## How the routing works
 
-`wrangler.jsonc` sets `assets.run_worker_first` to `["/", "/install.sh"]`, so only those
-two paths run the script (`src/worker.js`, logic in `src/routes.js`). Every other path is
-a static file from `public/`, with `public/404.html` for anything missing.
+`wrangler.jsonc` sets `assets.run_worker_first` to `"/*"` minus the non-HTML static files
+(`!/img/*`, `!/style.css`, `!/copy.js`, the favicons, `!/robots.txt`). Those files are
+served straight from `public/` with `public/_headers`. Every other path runs the script
+(`src/worker.js`, logic in `src/routes.js`): `/` and `/install.sh` as below, and anything
+else is passed to the static assets (so `public/404.html` with status 404 for anything
+missing) with the security headers added and bare `text/html` changed to
+`text/html; charset=utf-8`. A new non-HTML file in `public/` needs its own `!` entry; a
+test fails until it has one.
 
 | Request | Response |
 |---|---|
 | `GET /` from a command-line fetcher | the installer, `text/plain; charset=utf-8` |
-| `GET /` from a browser | `public/index.html` |
+| `GET /` from a browser | `public/index.html`, `text/html; charset=utf-8` |
 | `GET /install.sh`, any client | the installer |
 | upstream failure on either | `502`, a one-line shell snippet (below) |
-| anything else | a static file, or the 404 page |
+| a missing path | `404`, `public/404.html` as `text/html; charset=utf-8`; a missing `/img/...` path skips the Worker and gets bare `text/html` |
+| anything else | a static file |
 
 **Command-line fetcher** means the User-Agent starts with `curl`, `Wget`, `fetch`,
 `HTTPie` (and a few similar), or the `Accept` header doesn't contain `text/html`.
@@ -45,7 +51,7 @@ echo "intelbrew.sh: could not fetch the installer, try https://github.com/d4rkwy
 **Security headers** on every response: a CSP with `default-src 'none'` and only
 same-origin scripts, styles and images; HSTS; `X-Content-Type-Options: nosniff`;
 `Referrer-Policy: no-referrer`; `X-Frame-Options: DENY`. The worker sets them on its own
-responses and `public/_headers` sets them on static files.
+responses (including the 404 page) and `public/_headers` sets them on static files.
 
 ### Main or a release tag?
 
