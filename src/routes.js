@@ -47,6 +47,16 @@ function withSecurityHeaders(response) {
   return r;
 }
 
+// Workers Static Assets sends HTML as bare `text/html`; name the charset. Only
+// touches responses that are already HTML, so nothing else becomes HTML.
+function withHtmlCharset(response) {
+  const type = response.headers.get("content-type") || "";
+  if (/^text\/html\s*(;|$)/i.test(type)) {
+    response.headers.set("content-type", "text/html; charset=utf-8");
+  }
+  return response;
+}
+
 function scriptResponse(body, status, cacheControl, method) {
   return withSecurityHeaders(
     new Response(method === "HEAD" ? null : body, {
@@ -91,7 +101,7 @@ export async function handle(request, env, fetchImpl = fetch) {
   if (path !== "/" && path !== "/install.sh") {
     // Not reached in production (run_worker_first only sends these two paths
     // here), but keep the worker safe if that list ever widens.
-    return withSecurityHeaders(await env.ASSETS.fetch(request));
+    return withHtmlCharset(withSecurityHeaders(await env.ASSETS.fetch(request)));
   }
   if (request.method !== "GET" && request.method !== "HEAD") {
     return withSecurityHeaders(new Response("Method not allowed\n", {
@@ -102,7 +112,7 @@ export async function handle(request, env, fetchImpl = fetch) {
   if (path === "/install.sh" || isCliClient(request)) {
     return serveInstaller(request, fetchImpl);
   }
-  const page = withSecurityHeaders(await env.ASSETS.fetch(request));
+  const page = withHtmlCharset(withSecurityHeaders(await env.ASSETS.fetch(request)));
   page.headers.set("vary", "User-Agent, Accept");
   return page;
 }

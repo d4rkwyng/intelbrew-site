@@ -17,7 +17,7 @@ a static file from `public/`, with `public/404.html` for anything missing.
 | Request | Response |
 |---|---|
 | `GET /` from a command-line fetcher | the installer, `text/plain; charset=utf-8` |
-| `GET /` from a browser | `public/index.html` |
+| `GET /` from a browser | `public/index.html`, `text/html; charset=utf-8` |
 | `GET /install.sh`, any client | the installer |
 | upstream failure on either | `502`, a one-line shell snippet (below) |
 | anything else | a static file, or the 404 page |

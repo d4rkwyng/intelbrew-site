@@ -36,10 +36,13 @@ const env = {
     async fetch(request) {
       const p = new URL(request.url).pathname;
       this.calls.push(p);
+      // Workers Static Assets sends HTML as bare "text/html" (no charset).
       if (p === "/" ) return new Response("<!doctype html><title>Intelbrew</title>", {
-        headers: { "content-type": "text/html; charset=utf-8" } });
+        headers: { "content-type": "text/html" } });
+      if (p === "/style.css") return new Response("body{}", {
+        headers: { "content-type": "text/css" } });
       return new Response("<!doctype html><title>Not found</title>", {
-        status: 404, headers: { "content-type": "text/html; charset=utf-8" } });
+        status: 404, headers: { "content-type": "text/html" } });
     },
   },
 };
@@ -83,10 +86,32 @@ test("a browser on / gets the landing page and no upstream fetch", async () => {
   const f = okFetch();
   const res = await handle(req("/", { ua: CHROME_UA, accept: BROWSER_ACCEPT }), env, f);
   assert.equal(res.status, 200);
-  assert.match(res.headers.get("content-type"), /text\/html/);
+  assert.equal(res.headers.get("content-type"), "text/html; charset=utf-8");
   assert.match(res.headers.get("vary"), /User-Agent/);
   assert.match(res.headers.get("content-security-policy"), /default-src 'none'/);
   assert.equal(f.calls.length, 0);
+});
+
+test("HEAD / from a browser also gets the HTML charset", async () => {
+  const f = okFetch();
+  const res = await handle(req("/", { ua: CHROME_UA, accept: BROWSER_ACCEPT, method: "HEAD" }), env, f);
+  assert.equal(res.headers.get("content-type"), "text/html; charset=utf-8");
+  assert.equal(f.calls.length, 0);
+});
+
+test("charset fix only touches HTML: other asset types keep their type", async () => {
+  const f = okFetch();
+  const css = await handle(req("/style.css", { ua: CHROME_UA, accept: BROWSER_ACCEPT }), env, f);
+  assert.equal(css.headers.get("content-type"), "text/css");
+  const missing = await handle(req("/nope", { ua: CHROME_UA, accept: BROWSER_ACCEPT }), env, f);
+  assert.equal(missing.headers.get("content-type"), "text/html; charset=utf-8");
+  assert.equal(f.calls.length, 0);
+});
+
+test("landing page names the Tankard icon", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  assert.match(html, /<img class="tankard-icon" src="\/img\/tankard.png" alt="Tankard"/);
 });
 
 test("/install.sh serves the script to any user agent, including browsers", async () => {
