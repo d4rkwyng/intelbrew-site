@@ -4,7 +4,10 @@ document.addEventListener("click", async (event) => {
   if (!button) return;
   const source = document.getElementById(button.dataset.copy);
   if (!source) return;
-  const label = button.textContent;
+  // Remember the original label once: a second click within the reset delay
+  // would otherwise capture "Copied" and restore that for good.
+  const label = (button.dataset.label ??= button.textContent);
+  clearTimeout(button._copyReset);
   // The buttons carry an aria-label, so their changing text isn't announced:
   // report the result through the page's status region instead.
   const status = document.getElementById("copy-status");
@@ -23,5 +26,5 @@ document.addEventListener("click", async (event) => {
     button.textContent = "Selected";
     announce("Command selected; press Command-C to copy it");
   }
-  setTimeout(() => { button.textContent = label; announce(""); }, 1600);
+  button._copyReset = setTimeout(() => { button.textContent = label; announce(""); }, 1600);
 });
