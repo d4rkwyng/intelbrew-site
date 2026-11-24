@@ -13,9 +13,22 @@
     "directory": "./public",
     "binding": "ASSETS",
     "not_found_handling": "404-page",
-    // Only these two paths run the script (UA sniffing and the installer
-    // proxy); every other path is served straight from ./public.
-    "run_worker_first": ["/", "/install.sh"]
+    // The script runs first for every path ("/" and "/install.sh" for UA
+    // sniffing and the installer) except the non-HTML static files listed
+    // with "!", which are served straight from ./public with public/_headers.
+    // So missing paths (the 404 page) and any other HTML go through the
+    // script, which adds "charset=utf-8" to bare text/html.
+    // A new non-HTML file in ./public needs a "!" entry here (a test checks).
+    "run_worker_first": [
+      "/*",
+      "!/img/*",
+      "!/style.css",
+      "!/copy.js",
+      "!/favicon.ico",
+      "!/favicon-32.png",
+      "!/apple-touch-icon.png",
+      "!/robots.txt"
+    ]
   },
   // Workers Logs off (owner's setting): no stored request metadata or client IPs.
   // Upstream failures still go to console.error / wrangler tail.
